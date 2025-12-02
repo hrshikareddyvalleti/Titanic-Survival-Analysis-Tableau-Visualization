@@ -1,0 +1,43 @@
+import pandas as pd
+import numpy as np
+from scipy.stats import pearsonr
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+
+df = pd.read_csv("data.csv")
+print(df.head())
+
+for col in df.select_dtypes(include=["object"]).columns:
+    df[col] = df[col].fillna(df[col].mode()[0])
+
+label = LabelEncoder()
+for col in df.select_dtypes(include=["object"]).columns:
+    df[col] = label.fit_transform(df[col])
+
+scaler = StandardScaler()
+df[df.columns] = scaler.fit_transform(df)
+
+corr_matrix = df.corr(method="pearson")
+print(corr_matrix)
+
+plt.figure(figsize=(10, 6))
+sns.heatmap(corr_matrix, annot=True, fmt=".2f")
+plt.title("Pearson Correlation Heatmap")
+plt.show()
+
+feature1 = df.columns[0]
+feature2 = df.columns[1]
+corr, p_val = pearsonr(df[feature1], df[feature2])
+print("Pearson Correlation:", corr, "P-value:", p_val)
+
+X = df.drop(df.columns[-1], axis=1)
+y = df[df.columns[-1]]
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+model = RandomForestClassifier()
+model.fit(X_train, y_train)
+print("Model Accuracy:", model.score(X_test, y_test)) 
